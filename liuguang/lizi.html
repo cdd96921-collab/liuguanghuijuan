@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f0f14" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <title>✨ 流光绘卷 · 粒子画板 v6</title>
+        <link rel="stylesheet" href="css/lizi.css" />
+</head>
+<body>
+
+    <!-- ===== 启动页 ===== -->
+    <div id="splash">
+        <div class="splash-logo"></div>
+        <div class="splash-title">流光绘卷</div>
+        <div class="splash-sub">PARTICLE CANVAS</div>
+        <button class="splash-skip" id="splashSkip">跳过 ›</button>
+    </div>
+
+    <!-- ===== 画布 ===== -->
+    <div id="canvas-wrapper">
+        <canvas id="flowCanvas" aria-label="流光绘画画布"></canvas>
+        <div class="audio-ring" id="audioRing"></div>
+
+        <div class="brand">
+            <span class="logo-mark"></span> 流光绘卷 <span class="sub">· v6</span>
+        </div>
+
+        <div id="fpsMonitor" title="点击隐藏 FPS 监控">60 FPS</div>
+
+        <div class="hint" id="hint">
+            🖱 按住拖动 · 绘制流光
+            <span class="keys">[C]清空 · [Z]撤销 · [Y]重做 · [B]背景 · [S]保存 · [A]自动 · [P]保留 · [M]音频 · [G]作品库 · [D]日记 · [L]图层 · [I]吸管 · [E]橡皮 · [T]文字 · [0]重置缩放 · [Space]换主题</span>
+        </div>
+
+        <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+        <!-- ===== 撤销历史预览（长按撤销按钮触发） ===== -->
+        <div class="undo-preview" id="undoPreview" aria-hidden="true">
+            <div class="up-header">
+                <span>历史快照</span>
+                <button class="up-close" id="undoPreviewClose" aria-label="关闭">×</button>
+            </div>
+            <div class="up-grid" id="undoPreviewGrid"></div>
+            <div class="up-tip">点击快照跳转 · 顶部为当前</div>
+        </div>
+
+        <!-- ===== 左侧功能面板 ===== -->
+        <div class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="收起侧边栏">‹</button>
+            
+            <div class="sidebar-content">
+                <div class="sidebar-header">
+                    <span class="logo-mark"></span>
+                    <span class="sidebar-title">流光绘卷</span>
+                </div>
+                
+                <!-- 主题选择 -->
+                <div class="sidebar-section">
+                    <div class="section-label">主题</div>
+                    <div class="section-content flex-row">
+                        <button class="theme-btn active" data-theme="rainbow" aria-label="彩虹" aria-pressed="true" title="彩虹 (1)"><span class="dot"></span></button>
+                        <button class="theme-btn" data-theme="ocean" aria-label="海洋" aria-pressed="false" title="海洋 (2)"><span class="dot"></span></button>
+                        <button class="theme-btn" data-theme="fire" aria-label="火焰" aria-pressed="false" title="火焰 (3)"><span class="dot"></span></button>
+                        <button class="theme-btn" data-theme="aurora" aria-label="极光" aria-pressed="false" title="极光 (4)"><span class="dot"></span></button>
+                        <button class="theme-btn" data-theme="candy" aria-label="糖果" aria-pressed="false" title="糖果 (5)"><span class="dot"></span></button>
+                    </div>
+                </div>
+                
+                <!-- 画笔预设 -->
+                <div class="sidebar-section">
+                    <div class="section-label">画笔</div>
+                    <div class="section-content flex-row">
+                        <button class="preset-btn" data-preset="fine" title="细笔">细笔</button>
+                        <button class="preset-btn active" data-preset="medium" title="中笔">中笔</button>
+                        <button class="preset-btn" data-preset="coarse" title="粗笔">粗笔</button>
+                        <button class="preset-btn" data-preset="spray" title="喷枪">喷枪</button>
+                    </div>
+                </div>
+                
+                <!-- 工具 -->
+                <div class="sidebar-section">
+                    <div class="section-label">工具</div>
+                    <div class="section-content">
+                        <button class="tool-btn active" data-tool="brush" id="toolBrush" title="画笔" aria-label="画笔" aria-pressed="true">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                            <span>画笔</span>
+                        </button>
+                        <button class="tool-btn" data-tool="eyedropper" id="toolEyedrop" title="吸管 (I)" aria-label="吸管取色" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM10 17l-3.5-3.5 1.41-1.41L10 14.17l4.59-4.59L16 11l-6 6z"/></svg>
+                            <span>吸管</span>
+                        </button>
+                        <button class="tool-btn" data-tool="eraser" id="toolEraser" title="橡皮擦 (E)" aria-label="橡皮擦" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 14 13.41 10.41 17 9 15.59 12.59 12 9 8.41 10.41 7 14 10.59 17.59 7 19 8.41 15.41 12 19 15.59z"/></svg>
+                            <span>橡皮擦</span>
+                        </button>
+                        <button class="tool-btn" data-tool="text" id="toolText" title="文字 (T)" aria-label="文字标注" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4v3h5.5v12h3V7H19V4H5z"/></svg>
+                            <span>文字</span>
+                        </button>
+                        <button class="tool-btn" data-tool="pan" id="toolPan" title="拖动画布" aria-label="拖动画布" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 3h-11c-.55 0-1 .45-1 1s.45 1 1 1h11c.55 0 1-.45 1-1s-.45-1-1-1zm0 16h-11c-.55 0-1 .45-1 1s.45 1 1 1h11c.55 0 1-.45 1-1s-.45-1-1-1zm4.5-10c0-.55-.45-1-1-1h-11c-.55 0-1 .45-1 1s.45 1 1 1h11c.55 0 1-.45 1-1zm0 6c0-.55-.45-1-1-1h-11c-.55 0-1 .45-1 1s.45 1 1 1h11c.55 0 1-.45 1-1z"/></svg>
+                            <span>拖动</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 模式 -->
+                <div class="sidebar-section">
+                    <div class="section-label">模式</div>
+                    <div class="section-content">
+                        <button class="sidebar-btn" id="autoBtn" title="自动模式 (A)" aria-label="自动模式" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 100-6 3 3 0 000 6zm9-9a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1v-1a1 1 0 00-1-1h-1zm-1 8a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1v-1a1 1 0 00-1-1h-1zM4 4a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1V5a1 1 0 00-1-1H4zm0 9a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1v-1a1 1 0 00-1-1H4z"/></svg>
+                            <span>自动</span>
+                        </button>
+                        <button class="sidebar-btn" id="preserveBtn" title="保留路径 (P)" aria-label="保留路径" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                            <span>保留</span>
+                        </button>
+                        <button class="sidebar-btn" id="audioBtn" title="音频反应 (M)" aria-label="音频反应" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V5l12-2v13h-9l3-9h-9l3 9z"/></svg>
+                            <span>音频</span>
+                        </button>
+                        <button class="sidebar-btn" id="bgToggle" title="切换背景 (B)" aria-label="切换背景明暗">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/></svg>
+                            <span>背景</span>
+                        </button>
+                        <button class="sidebar-btn" id="dynamicBgBtn" title="动态背景" aria-label="动态背景效果" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                            <span>动态背景</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 撤销重做 -->
+                <div class="sidebar-section">
+                    <div class="section-label">历史</div>
+                    <div class="section-content">
+                        <button class="sidebar-btn" id="undoBtn" title="撤销 (Z) · 长按看历史" aria-label="撤销" disabled>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+                            <span>撤销</span>
+                        </button>
+                        <button class="sidebar-btn" id="redoBtn" title="重做 (Y)" aria-label="重做" disabled>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>
+                            <span>重做</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 视图控制 -->
+                <div class="sidebar-section">
+                    <div class="section-label">视图</div>
+                    <div class="section-content">
+                        <button class="sidebar-btn" id="zoomReset" title="重置缩放 (0)" aria-label="重置缩放">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                            <span>重置缩放</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 功能 -->
+                <div class="sidebar-section">
+                    <div class="section-label">功能</div>
+                    <div class="section-content">
+                        <button class="sidebar-btn" id="galleryBtn" title="作品库 (G)">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/></svg>
+                            <span>作品库</span>
+                        </button>
+                        <button class="sidebar-btn" id="paletteBtn" title="智能调色板">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                            <span>调色板</span>
+                        </button>
+                        <button class="sidebar-btn" id="inspBtn" title="灵感画廊">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                            <span>灵感</span>
+                        </button>
+                        <button class="sidebar-btn" id="aiBtn" title="AI 创作">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                            <span>AI创作</span>
+                        </button>
+                        <button class="sidebar-btn" id="shareBtn" title="分享导出">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+                            <span>分享</span>
+                        </button>
+                        <button class="sidebar-btn" id="diaryBtn" title="情绪日记 (D)">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>
+                            <span>日记</span>
+                        </button>
+                        <button class="sidebar-btn" id="saveBtn" title="保存 (S)">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 16l-5-2.5L7 19V5h10v14z"/></svg>
+                            <span>保存</span>
+                        </button>
+                        <button class="sidebar-btn" id="layerBtn" title="图层 (L)" aria-label="图层管理">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.37 5.74zM12 16l-8.06-6.04L12 4l8.06 6.04L12 16z"/></svg>
+                            <span>图层</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 参数 -->
+                <div class="sidebar-section">
+                    <div class="section-label">参数</div>
+                    <div class="section-content">
+                        <button class="sidebar-btn" id="paramsBtn" title="参数调整" aria-label="参数调整">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.43 12.98c.04-.31.07-.63.07-.95 0-.32-.03-.64-.07-.95l2.11-1.65c.19-.15.24-.42.12-.64l-1.9-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.01 1.58c-.05.31-.09.63-.09.95s.04.64.09.95l-2.01 1.58c-.18.15-.23.41-.12.64l1.9 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                            <span>参数</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 设置与清空 -->
+                <div class="sidebar-section">
+                    <div class="section-label">其他</div>
+                    <div class="section-content">
+                        <button class="sidebar-btn" id="settingsBtn" title="设置" aria-label="设置">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                            <span>设置</span>
+                        </button>
+                        <button class="sidebar-btn danger" id="clearBtn" title="清空 (C)" aria-label="清空画布">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                            <span>清空</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 参数二级菜单 -->
+            <div class="params-menu" id="paramsMenu">
+                <div class="params-header">参数调整</div>
+                <div class="params-content">
+                    <div class="slider-group">
+                        <label class="slider-label" for="sizeSlider">大小</label>
+                        <input type="range" id="sizeSlider" min="1" max="6" step="0.1" value="2.8" aria-label="粒子大小" />
+                        <span class="slider-value" id="sizeVal">2.8</span>
+                    </div>
+                    <div class="slider-group">
+                        <label class="slider-label" for="speedSlider">速度</label>
+                        <input type="range" id="speedSlider" min="0.1" max="2.0" step="0.05" value="0.7" aria-label="粒子速度" />
+                        <span class="slider-value" id="speedVal">0.7</span>
+                    </div>
+                    <div class="slider-group">
+                        <label class="slider-label" for="densitySlider">密度</label>
+                        <input type="range" id="densitySlider" min="1" max="20" step="1" value="8" aria-label="粒子密度" />
+                        <span class="slider-value" id="densityVal">8</span>
+                    </div>
+                    <div class="slider-group">
+                        <label class="slider-label" for="trailSlider">拖尾</label>
+                        <input type="range" id="trailSlider" min="0.01" max="0.6" step="0.01" value="0.10" aria-label="拖尾长度" />
+                        <span class="slider-value" id="trailVal">0.10</span>
+                    </div>
+                    <div class="slider-group">
+                        <label class="slider-label" for="eraserSizeSlider">橡皮擦</label>
+                        <input type="range" id="eraserSizeSlider" min="2" max="50" step="1" value="10" aria-label="橡皮擦大小" />
+                        <span class="slider-value" id="eraserSizeVal">10</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 下拉菜单容器 -->
+            <div class="menu-pop" id="settingsMenu"></div>
+            <div class="menu-pop" id="audioStyleMenu"></div>
+        </div>
+        
+        <!-- 参数二级菜单 -->
+        <div class="params-menu" id="paramsMenu">
+            <div class="params-header">参数调整</div>
+            <div class="params-content">
+                <div class="slider-group">
+                    <label class="slider-label" for="sizeSlider">大小</label>
+                    <input type="range" id="sizeSlider" min="1" max="6" step="0.1" value="2.8" aria-label="粒子大小" />
+                    <span class="slider-value" id="sizeVal">2.8</span>
+                </div>
+                <div class="slider-group">
+                    <label class="slider-label" for="speedSlider">速度</label>
+                    <input type="range" id="speedSlider" min="0.1" max="2.0" step="0.05" value="0.7" aria-label="粒子速度" />
+                    <span class="slider-value" id="speedVal">0.7</span>
+                </div>
+                <div class="slider-group">
+                    <label class="slider-label" for="densitySlider">密度</label>
+                    <input type="range" id="densitySlider" min="1" max="20" step="1" value="8" aria-label="粒子密度" />
+                    <span class="slider-value" id="densityVal">8</span>
+                </div>
+                <div class="slider-group">
+                    <label class="slider-label" for="trailSlider">拖尾</label>
+                    <input type="range" id="trailSlider" min="0.01" max="0.6" step="0.01" value="0.10" aria-label="拖尾长度" />
+                    <span class="slider-value" id="trailVal">0.10</span>
+                </div>
+                <div class="slider-group">
+                    <label class="slider-label" for="eraserSizeSlider">橡皮擦</label>
+                    <input type="range" id="eraserSizeSlider" min="2" max="50" step="1" value="10" aria-label="橡皮擦大小" />
+                    <span class="slider-value" id="eraserSizeVal">10</span>
+                </div>
+                <div class="params-actions">
+                    <button class="sidebar-btn" id="zoomReset" title="重置缩放 (0)" aria-label="重置缩放">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                        <span>重置缩放</span>
+                    </button>
+                    <button class="sidebar-btn" id="importBtn" title="导入图片" aria-label="导入图片为新图层">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                        <span>导入图片</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 旧控制面板（已废弃，保留兼容） -->
+        <div class="controls hidden" id="controls" role="toolbar" aria-label="绘画控制"></div>
+    </div>
+
+    <!-- ===== 画廊抽屉 ===== -->
+    <div class="overlay" id="galleryOverlay"></div>
+    <aside class="drawer" id="galleryDrawer" aria-label="作品库">
+        <div class="drawer-header">
+            <h2>🖼 作品库</h2>
+            <div class="drawer-header-actions">
+                <button class="ghost-btn" id="galleryBatchBtn" title="批量管理">批量</button>
+                <button class="drawer-close" id="galleryClose" aria-label="关闭"></button>
+            </div>
+        </div>
+        <div class="drawer-body" id="galleryBody"></div>
+    </aside>
+
+    <!-- ===== 灵感画廊抽屉 ===== -->
+    <div class="overlay" id="inspOverlay"></div>
+    <aside class="drawer" id="inspDrawer" aria-label="灵感画廊">
+        <div class="drawer-header">
+            <h2>✨ 灵感画廊</h2>
+            <button class="drawer-close" id="inspClose" aria-label="关闭"></button>
+        </div>
+        <div class="drawer-body" id="inspBody"></div>
+    </aside>
+
+    <!-- ===== 图层面板抽屉 ===== -->
+    <div class="overlay" id="layerOverlay"></div>
+    <aside class="drawer layer-drawer" id="layerDrawer" aria-label="图层管理">
+        <div class="drawer-header">
+            <h2>🗂 图层</h2>
+            <button class="drawer-close" id="layerClose" aria-label="关闭"></button>
+        </div>
+        <div class="drawer-body" id="layerBody"></div>
+    </aside>
+
+    <!-- ===== 保存对话框 ===== -->
+    <div class="modal" id="saveModal">
+        <h2>保存作品</h2>
+        <div class="modal-sub">为这幅流光留个名字与心情</div>
+        <label for="saveName">作品名称</label>
+        <input type="text" id="saveName" placeholder="未命名流光" maxlength="30" />
+        <label>此刻心情</label>
+        <div class="stars" id="saveStars">
+            <button class="star-btn" data-v="1">★</button>
+            <button class="star-btn" data-v="2">★</button>
+            <button class="star-btn" data-v="3">★</button>
+            <button class="star-btn" data-v="4">★</button>
+            <button class="star-btn" data-v="5">★</button>
+        </div>
+        <label for="saveNote">心情笔记（可选）</label>
+        <textarea id="saveNote" placeholder="今天画这幅画时，我感觉..." maxlength="200"></textarea>
+        <label for="saveTags">标签（逗号分隔，可选）</label>
+        <input type="text" id="saveTags" placeholder="如：风景, 抽象, 灵感" maxlength="60" />
+        <div class="modal-actions">
+            <button class="btn-secondary" id="saveCancel">取消</button>
+            <button class="btn-primary" id="saveConfirm">保存到作品库</button>
+        </div>
+    </div>
+
+    <!-- ===== AI 对话框 ===== -->
+    <div class="overlay" id="aiOverlay"></div>
+    <div class="modal" id="aiModal" style="width:min(520px,92vw);">
+        <h2>🤖 AI 创作</h2>
+        <div class="modal-sub">让 AI 为你的流光注入灵感</div>
+        <div class="ai-tabs">
+            <button class="ai-tab active" data-tab="style">风格迁移</button>
+            <button class="ai-tab" data-tab="emotion">情绪识别</button>
+        </div>
+        <div class="ai-panel" id="aiPanelStyle">
+            <div class="ai-desc">上传一张图片，AI 分析其色彩风格，生成专属调色板与粒子参数。</div>
+            <label for="aiStyleFile" class="file-label">选择图片</label>
+            <input type="file" id="aiStyleFile" accept="image/*" hidden />
+            <div class="ai-file-row">
+                <div class="ai-file-name" id="aiStyleFileName">未选择图片</div>
+                <button class="ai-file-clear" id="aiStyleClear" style="display:none;">清除</button>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="aiCancel">关闭</button>
+                <button class="btn-primary" id="aiStyleApply">分析并应用</button>
+            </div>
+        </div>
+        <div class="ai-panel hidden" id="aiPanelEmotion">
+            <div class="ai-desc">输入一段心情文字，AI 识别情绪并推荐最匹配的主题色彩。</div>
+            <textarea id="aiEmotionText" placeholder="今天心情很低落，像一片灰色的海..." maxlength="200"></textarea>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="aiCancel2">关闭</button>
+                <button class="btn-primary" id="aiEmotionApply">分析情绪</button>
+            </div>
+        </div>
+        <div class="ai-loading hidden" id="aiLoading">
+            <div class="ai-spinner"></div>
+            <div>AI 分析中，请稍候...</div>
+        </div>
+    </div>
+
+    <!-- ===== 分享对话框 ===== -->
+    <div class="overlay" id="shareOverlay"></div>
+    <div class="modal" id="shareModal" style="width:min(520px,92vw);">
+        <h2>📤 分享导出</h2>
+        <div class="modal-sub">生成分享卡片或导出动画</div>
+        <label for="shareArtist">艺术家署名</label>
+        <input type="text" id="shareArtist" placeholder="流光" maxlength="20" />
+        <div class="share-card-preview" id="shareCardPreview">
+            <div class="share-preview-tip">点击「生成卡片」预览</div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" id="shareCancel">关闭</button>
+            <button class="btn-primary" id="shareCardBtn">生成卡片</button>
+            <button class="btn-primary" id="shareWebMBtn">导出 WebM</button>
+        </div>
+    </div>
+
+    <!-- ===== 日记对话框 ===== -->
+    <div class="overlay" id="diaryOverlay"></div>
+    <div class="modal" id="diaryModal" style="width:min(560px,92vw);">
+        <h2>📊 情绪日记</h2>
+        <div class="modal-sub">近 7 天的心情轨迹</div>
+        <canvas class="diary-chart" id="diaryChart" width="500" height="120"></canvas>
+        <div class="diary-list" id="diaryList"></div>
+        <div class="modal-actions">
+            <button class="btn-secondary" id="diaryClose">关闭</button>
+        </div>
+    </div>
+
+    <!-- ===== 确认对话框 ===== -->
+    <div class="overlay" id="confirmOverlay"></div>
+    <div class="modal" id="confirmModal" style="width:min(420px,92vw);">
+        <h2 id="confirmTitle">确认操作</h2>
+        <div class="modal-sub" id="confirmMessage">确定要执行此操作吗？</div>
+        <div class="modal-actions">
+            <button class="btn-secondary" id="confirmCancel">取消</button>
+            <button class="btn-danger" id="confirmOk">确认</button>
+        </div>
+    </div>
+
+    <!-- ===== 快捷键面板 ===== -->
+    <div class="overlay" id="shortcutsOverlay"></div>
+    <div class="modal" id="shortcutsModal" style="width:min(560px,92vw);max-height:80vh;overflow-y:auto;">
+        <h2>⌨ 快捷键参考</h2>
+        <div class="modal-sub">按 <kbd>Ctrl</kbd> + <kbd>/</kbd> 打开此面板</div>
+        <div class="shortcuts-grid" id="shortcutsGrid">
+            <div class="shortcuts-group">
+                <div class="shortcuts-group-title">基础操作</div>
+                <div class="shortcut-item"><kbd>C</kbd><span>清空画布</span></div>
+                <div class="shortcut-item"><kbd>Z</kbd><span>撤销</span></div>
+                <div class="shortcut-item"><kbd>Y</kbd><span>重做</span></div>
+                <div class="shortcut-item"><kbd>S</kbd><span>保存作品</span></div>
+            </div>
+            <div class="shortcuts-group">
+                <div class="shortcuts-group-title">工具切换</div>
+                <div class="shortcut-item"><kbd>B</kbd><span>切换背景</span></div>
+                <div class="shortcut-item"><kbd>A</kbd><span>自动模式</span></div>
+                <div class="shortcut-item"><kbd>P</kbd><span>保留路径</span></div>
+                <div class="shortcut-item"><kbd>M</kbd><span>音频反应</span></div>
+                <div class="shortcut-item"><kbd>I</kbd><span>吸管工具</span></div>
+                <div class="shortcut-item"><kbd>E</kbd><span>橡皮擦</span></div>
+                <div class="shortcut-item"><kbd>T</kbd><span>文字工具</span></div>
+            </div>
+            <div class="shortcuts-group">
+                <div class="shortcuts-group-title">视图控制</div>
+                <div class="shortcut-item"><kbd>0</kbd><span>重置缩放</span></div>
+                <div class="shortcut-item"><kbd>G</kbd><span>作品库</span></div>
+                <div class="shortcut-item"><kbd>D</kbd><span>情绪日记</span></div>
+                <div class="shortcut-item"><kbd>L</kbd><span>图层管理</span></div>
+            </div>
+            <div class="shortcuts-group">
+                <div class="shortcuts-group-title">主题切换</div>
+                <div class="shortcut-item"><kbd>Space</kbd><span>随机主题</span></div>
+                <div class="shortcut-item"><kbd>1</kbd><span>彩虹主题</span></div>
+                <div class="shortcut-item"><kbd>2</kbd><span>海洋主题</span></div>
+                <div class="shortcut-item"><kbd>3</kbd><span>火焰主题</span></div>
+                <div class="shortcut-item"><kbd>4</kbd><span>极光主题</span></div>
+                <div class="shortcut-item"><kbd>5</kbd><span>糖果主题</span></div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" id="shortcutsClose">关闭</button>
+        </div>
+    </div>
+
+    <!-- ===== 智能调色板面板 ===== -->
+    <div class="overlay" id="paletteOverlay"></div>
+    <div class="modal" id="paletteModal" style="width:min(600px,92vw);max-height:85vh;overflow-y:auto;">
+        <h2>🎨 智能调色板</h2>
+        <div class="modal-sub">基于画布内容分析生成的配色方案</div>
+        <div class="palette-container" id="paletteContainer"></div>
+        <div class="modal-actions">
+            <button class="btn-secondary" id="paletteRefresh">重新分析</button>
+            <button class="btn-secondary" id="paletteClose">关闭</button>
+        </div>
+    </div>
+
+    <!-- ===== 引导层 ===== -->
+    <div class="onboard" id="onboard">
+        <div class="onboard-spot" id="onboardSpot"></div>
+        <div class="onboard-card" id="onboardCard">
+            <div class="ob-progress" id="obProgress">第 1 / 3 步</div>
+            <h3 id="obTitle"></h3>
+            <p id="obText"></p>
+            <div class="ob-actions">
+                <button class="ob-skip" id="obSkip">跳过引导</button>
+                <button class="ob-next" id="obNext">下一步</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SVG 图标定义（不可见，仅引用） -->
+    <svg width="0" height="0" style="position:absolute;"><defs>
+        <!-- 色盲模拟滤镜 -->
+        <filter id="cb-protanopia"><feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/></filter>
+        <filter id="cb-deuteranopia"><feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/></filter>
+        <filter id="cb-tritanopia"><feColorMatrix type="matrix" values="0.95 0.05 0 0 0  0 0.433 0.567 0 0  0 0.475 0.525 0 0  0 0 0 1 0"/></filter>
+    </defs></svg>
+
+        <script type="module" src="js/main.js"></script>
+</body>
+</html>
