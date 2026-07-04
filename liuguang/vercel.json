@@ -31,6 +31,30 @@
             "dest": "/api/ai.js"
         },
         {
+            "src": "/css/(.*)",
+            "dest": "/css/$1"
+        },
+        {
+            "src": "/js/(.*)",
+            "dest": "/js/$1"
+        },
+        {
+            "src": "/(.*\\.svg)",
+            "dest": "/$1"
+        },
+        {
+            "src": "/(.*\\.ico)",
+            "dest": "/$1"
+        },
+        {
+            "src": "/",
+            "dest": "/lizi.html"
+        },
+        {
+            "src": "/lizi.html",
+            "dest": "/lizi.html"
+        },
+        {
             "src": "/(.*)",
             "dest": "/lizi.html"
         }
