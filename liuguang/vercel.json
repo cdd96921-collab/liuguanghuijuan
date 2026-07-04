@@ -1,0 +1,38 @@
+{
+    "builds": [
+        {
+            "src": "api/**/*.js",
+            "use": "@vercel/node"
+        },
+        {
+            "src": "lizi.html",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "css/**/*.css",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "js/**/*.js",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "*.svg",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "*.ico",
+            "use": "@vercel/static"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/api/ai",
+            "dest": "/api/ai.js"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/lizi.html"
+        }
+    ]
+}
