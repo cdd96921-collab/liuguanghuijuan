@@ -1,62 +1,14 @@
 {
     "builds": [
         {
-            "src": "api/**/*.js",
+            "src": "api/ai.js",
             "use": "@vercel/node"
-        },
-        {
-            "src": "lizi.html",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "css/**/*.css",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "js/**/*.js",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "*.svg",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "*.ico",
-            "use": "@vercel/static"
         }
     ],
     "routes": [
         {
-            "src": "/api/ai(.*)",
+            "src": "/api/ai",
             "dest": "/api/ai.js"
-        },
-        {
-            "src": "/css/(.*)",
-            "dest": "/css/$1"
-        },
-        {
-            "src": "/js/(.*)",
-            "dest": "/js/$1"
-        },
-        {
-            "src": "/(.*\\.svg)",
-            "dest": "/$1"
-        },
-        {
-            "src": "/(.*\\.ico)",
-            "dest": "/$1"
-        },
-        {
-            "src": "/",
-            "dest": "/lizi.html"
-        },
-        {
-            "src": "/lizi.html",
-            "dest": "/lizi.html"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/lizi.html"
         }
     ]
 }
