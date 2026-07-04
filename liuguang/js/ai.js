@@ -24,10 +24,9 @@
 //  API 配置
 // ============================================================
 
-const API_URL = '/api/ai';
-const API_MODEL = 'qwen3.7-plus';
-// TODO: 替换为真实 API Key（当前为掩码占位符，运行时会返回 401）
-const API_KEY = 'sk-ws-H.RXYLELH.spK0.MEUCIFucBU8QYxfSnEUTgcRk84dgIrf5dREKLhWP1tArUwZPAiEA440l2hGD0tRpyKZjCusZgXhaM_5lDI01F4Q5hSXpav4';
+const API_URL = 'https://integrate.api.nvidia.com/v1';
+const API_MODEL = 'minimaxai/minimax-m3';
+const API_KEY = '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';
 const REQUEST_TIMEOUT = 30000; // 30s
 
 // ============================================================
@@ -46,8 +45,9 @@ async function _callAPI(messages, isVision = false) {
     const body = JSON.stringify({
         model: API_MODEL,
         messages,
-        temperature: 0.6,
-        max_tokens: isVision ? 800 : 100,
+        temperature: isVision ? 1.0 : 0.6,
+        max_tokens: isVision ? 8192 : 200,
+        top_p: 0.95,
     });
 
     const doFetch = () => new Promise((resolve, reject) => {
