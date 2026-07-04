@@ -27,7 +27,7 @@
     ],
     "routes": [
         {
-            "src": "/api/ai",
+            "src": "/api/ai(.*)",
             "dest": "/api/ai.js"
         },
         {
