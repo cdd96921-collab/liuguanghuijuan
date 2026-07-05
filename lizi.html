@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f0f14" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <title>✨ 流光绘卷 · 粒子画板 v7</title>
+        <link rel="stylesheet" href="css/lizi.css" />
+</head>
+<body>
+
+    <!-- ===== 启动页 ===== -->
+    <div id="splash">
+        <div class="splash-logo"></div>
+        <div class="splash-title">流光绘卷</div>
+        <div class="splash-sub">PARTICLE CANVAS</div>
+        <button class="splash-skip" id="splashSkip">跳过 ›</button>
+    </div>
+
+    <!-- ===== 画布 ===== -->
+    <div id="canvas-wrapper">
+        <canvas id="flowCanvas" aria-label="流光绘画画布"></canvas>
+        <div class="audio-ring" id="audioRing"></div>
+
+        <div class="brand">
+            <span class="logo-mark"></span> 流光绘卷 <span class="sub">· v7</span>
+        </div>
+
+        <div id="fpsMonitor" title="点击隐藏 FPS 监控">60 FPS</div>
+
+        <div class="hint" id="hint">
+            🖱 按住拖动 · 绘制流光
+            <span class="keys">[C]清空 · [Z]撤销 · [Y]重做 · [B]背景 · [S]保存 · [A]自动 · [P]保留 · [M]音频 · [G]作品库 · [D]日记 · [L]图层 · [I]吸管 · [E]橡皮 · [T]文字 · [0]重置缩放 · [Space]换主题</span>
+        </div>
+
+        <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+        <!-- ===== 移动端左侧调节滑块（画笔模式下显示） ===== -->
+        <div class="brush-slider-panel" id="brushSliderPanel" aria-hidden="true">
+            <div class="brush-slider brush-size-slider" data-param="size">
+                <div class="brush-slider-track">
+                    <div class="brush-slider-fill" id="brushSizeFill"></div>
+                    <div class="brush-slider-thumb" id="brushSizeThumb"></div>
+                </div>
+                <span class="brush-slider-label">大小</span>
+            </div>
+            <div class="brush-slider brush-opacity-slider" data-param="opacity">
+                <div class="brush-slider-track">
+                    <div class="brush-slider-fill" id="brushOpacityFill"></div>
+                    <div class="brush-slider-thumb" id="brushOpacityThumb"></div>
+                </div>
+                <span class="brush-slider-label">不透明度</span>
+            </div>
+        </div>
+
+        <!-- ===== 移动端底部工具栏（仅移动端显示） ===== -->
+        <div class="mobile-bar" id="mobileBar" aria-hidden="true">
+            <div class="mobile-bar-handle" id="mobileBarHandle" role="button" aria-label="展开/收起工具面板">
+                <span class="handle-pill"></span>
+            </div>
+            <div class="mobile-bar-row">
+                <button class="m-btn" data-target="undoBtn" aria-label="撤销">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                </button>
+                <button class="m-btn active" data-target="toolBrush" aria-label="画笔" aria-pressed="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg>
+                </button>
+                <button class="m-btn" id="mThemeBtn" aria-label="色板">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+                </button>
+                <button class="m-btn" data-target="redoBtn" aria-label="重做">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+                </button>
+                <button class="m-btn" data-target="saveBtn" aria-label="保存">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                </button>
+            </div>
+            <div class="mobile-panel" id="mobilePanel">
+                <div class="m-section">
+                    <div class="m-section-label">粒子模式</div>
+                    <label class="m-switch">
+                        <input type="checkbox" id="particleModeToggle" checked />
+                        <span class="m-switch-track"><span class="m-switch-thumb"></span></span>
+                        <span class="m-switch-text">粒子绘画效果</span>
+                    </label>
+                    <div class="m-hint">关闭时画笔变为实心笔触，可调颜色/大小/透明度</div>
+                </div>
+                <div class="m-section">
+                    <div class="m-section-label">参数（上下滑动调整）</div>
+                    <div class="m-param" data-param="size"><span class="m-param-name">大小</span><span class="m-param-val" id="mSizeVal">2.8</span></div>
+                    <div class="m-param" data-param="opacity"><span class="m-param-name">透明度</span><span class="m-param-val" id="mOpacityVal">80</span></div>
+                    <div class="m-param" data-param="speed"><span class="m-param-name">速度</span><span class="m-param-val" id="mSpeedVal">0.7</span></div>
+                    <div class="m-param" data-param="density"><span class="m-param-name">密度</span><span class="m-param-val" id="mDensityVal">8</span></div>
+                    <div class="m-param" data-param="trail"><span class="m-param-name">拖尾</span><span class="m-param-val" id="mTrailVal">0.10</span></div>
+                    <div class="m-param" data-param="eraserSize"><span class="m-param-name">橡皮</span><span class="m-param-val" id="mEraserVal">10</span></div>
+                </div>
+                <div class="m-section">
+                    <button class="m-reset-btn" id="mZoomReset">重置视角</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 缩放比例（顶部中间固定，仅移动端显示） -->
+        <div class="zoom-indicator" id="zoomIndicator" aria-hidden="true">100%</div>
+
+        <!-- 主题色板浮层（仅移动端，点击色板按钮弹出） -->
+        <div class="m-theme-popup" id="mThemePopup" aria-hidden="true">
+            <button class="m-theme-opt" data-theme="rainbow"><span class="m-theme-dot" style="background:linear-gradient(135deg,#ff5e5e,#ffe156,#5eff8e,#5ea8ff,#c45eff)"></span>彩虹</button>
+            <button class="m-theme-opt" data-theme="ocean"><span class="m-theme-dot" style="background:linear-gradient(135deg,#0fb8c8,#1e6fff,#7c3dff)"></span>海洋</button>
+            <button class="m-theme-opt" data-theme="fire"><span class="m-theme-dot" style="background:linear-gradient(135deg,#ff3030,#ff8c00,#ffe100)"></span>火焰</button>
+            <button class="m-theme-opt" data-theme="aurora"><span class="m-theme-dot" style="background:linear-gradient(135deg,#5eff8e,#5effe0,#5ea8ff)"></span>极光</button>
+            <button class="m-theme-opt" data-theme="candy"><span class="m-theme-dot" style="background:linear-gradient(135deg,#ff80b0,#ffa8e0,#c0a8ff)"></span>糖果</button>
+        </div>
+
+        <!-- ===== 撤销历史预览（长按撤销按钮触发） ===== -->
+        <div class="undo-preview" id="undoPreview" aria-hidden="true">
+            <div class="up-header">
+                <span>历史快照</span>
+                <button class="up-close" id="undoPreviewClose" aria-label="关闭">×</button>
+            </div>
+            <div class="up-grid" id="undoPreviewGrid"></div>
+            <div class="up-tip">点击快照跳转 · 顶部为当前</div>
+        </div>
+
+        <!-- ===== 底部工具栏 ===== -->
+        <div class="toolbar" id="toolbar">
+            <button class="toolbar-toggle" id="toolbarToggle" aria-label="收起工具栏">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+            </button>
+            
+            <div class="toolbar-content">
+                <div class="toolbar-main">
+                    <div class="toolbar-brand">
+                        <span class="logo-mark"></span>
+                        <span class="toolbar-title">流光绘卷</span>
+                    </div>
+                    
+                    <div class="toolbar-center">
+                        <div class="mode-switcher" id="modeSwitcher">
+                            <button class="mode-btn active" data-mode="particle" id="modeParticle" aria-label="粒子模式">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                                <span>粒子</span>
+                            </button>
+                            <button class="mode-btn" data-mode="brush" id="modeBrush" aria-label="画笔模式">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg>
+                                <span>画笔</span>
+                            </button>
+                        </div>
+                        
+                        <div class="toolbar-divider"></div>
+                        
+                        <div class="toolbar-categories">
+                            <button class="category-btn particle-only" data-category="theme" title="主题">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                <span>主题</span>
+                            </button>
+                            <button class="category-btn" data-category="brush" title="画笔">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7.5 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                <span>画笔</span>
+                            </button>
+                            <button class="category-btn particle-only" data-category="shape" title="形状">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+                                <span>形状</span>
+                            </button>
+                            <button class="category-btn" data-category="tool" title="工具">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                                <span>工具</span>
+                            </button>
+                            <button class="category-btn" data-category="mode" title="模式">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                <span>模式</span>
+                            </button>
+                            <button class="category-btn" data-category="history" title="历史">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                <span>历史</span>
+                            </button>
+                            <button class="category-btn" data-category="view" title="视图">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                                <span>视图</span>
+                            </button>
+                            <button class="category-btn" data-category="function" title="功能">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                                <span>功能</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="toolbar-spacer"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ===== 分类弹窗 ===== -->
+        <div class="category-popup" id="categoryPopup">
+            <div class="popup-header">
+                <span class="popup-title" id="popupTitle">主题</span>
+                <button class="popup-close" id="popupClose" aria-label="关闭弹窗">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="popup-content" id="popupContent"></div>
+        </div>
+        
+        <!-- 参数二级菜单 -->
+        <div class="params-menu" id="paramsMenu">
+            <div class="params-header">参数调整</div>
+            <div class="params-content">
+                    <div class="slider-group brush-only">
+                        <label class="slider-label" for="brushSizeSlider">画笔大小</label>
+                        <input type="range" id="brushSizeSlider" min="1" max="50" step="1" value="10" aria-label="画笔大小" />
+                        <span class="slider-value" id="brushSizeVal">10</span>
+                    </div>
+                    <div class="slider-group brush-only">
+                        <label class="slider-label" for="brushOpacitySlider">透明度</label>
+                        <input type="range" id="brushOpacitySlider" min="10" max="100" step="5" value="80" aria-label="画笔透明度" />
+                        <span class="slider-value" id="brushOpacityVal">80%</span>
+                    </div>
+                    <div class="color-picker brush-only">
+                        <label class="slider-label">颜色</label>
+                        <div class="color-wheel-container">
+                            <canvas id="colorWheel" width="160" height="160"></canvas>
+                            <div class="color-wheel-cursor" id="colorWheelCursor"></div>
+                        </div>
+                        <div class="color-slider-row">
+                            <input type="range" id="colorHueSlider" min="0" max="360" step="1" value="0" aria-label="色相" />
+                            <input type="range" id="colorSatSlider" min="0" max="100" step="1" value="80" aria-label="饱和度" />
+                            <input type="range" id="colorLightSlider" min="0" max="100" step="1" value="50" aria-label="亮度" />
+                        </div>
+                        <div class="color-preview" id="colorPreview"></div>
+                    </div>
+                    <div class="slider-group particle-only">
+                        <label class="slider-label" for="sizeSlider">粒子大小</label>
+                        <input type="range" id="sizeSlider" min="1" max="6" step="0.1" value="2.8" aria-label="粒子大小" />
+                        <span class="slider-value" id="sizeVal">2.8</span>
+                    </div>
+                    <div class="slider-group particle-only">
+                        <label class="slider-label" for="speedSlider">速度</label>
+                        <input type="range" id="speedSlider" min="0.1" max="2.0" step="0.05" value="0.7" aria-label="粒子速度" />
+                        <span class="slider-value" id="speedVal">0.7</span>
+                    </div>
+                    <div class="slider-group particle-only">
+                        <label class="slider-label" for="densitySlider">密度</label>
+                        <input type="range" id="densitySlider" min="1" max="20" step="1" value="8" aria-label="粒子密度" />
+                        <span class="slider-value" id="densityVal">8</span>
+                    </div>
+                    <div class="slider-group particle-only">
+                        <label class="slider-label" for="trailSlider">拖尾</label>
+                        <input type="range" id="trailSlider" min="0.01" max="0.6" step="0.01" value="0.10" aria-label="拖尾长度" />
+                        <span class="slider-value" id="trailVal">0.10</span>
+                    </div>
+                    <div class="slider-group">
+                        <label class="slider-label" for="eraserSizeSlider">橡皮擦</label>
+                        <input type="range" id="eraserSizeSlider" min="2" max="50" step="1" value="10" aria-label="橡皮擦大小" />
+                        <span class="slider-value" id="eraserSizeVal">10</span>
+                    </div>
+                    <div class="params-actions">
+                        <button class="sidebar-btn" id="zoomReset" title="重置缩放 (0)" aria-label="重置缩放">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                            <span>重置缩放</span>
+                        </button>
+                        <button class="sidebar-btn" id="importBtn" title="导入图片" aria-label="导入图片为新图层">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                            <span>导入图片</span>
+                        </button>
+                    </div>
+            </div>
+            
+            <!-- 下拉菜单容器 -->
+            <div class="menu-pop" id="settingsMenu"></div>
+            <div class="menu-pop" id="audioStyleMenu"></div>
+        </div>
+        
+        <!-- 旧控制面板（已废弃，保留兼容） -->
+        <div class="controls hidden" id="controls" role="toolbar" aria-label="绘画控制"></div>
+    </div>
+
+    <!-- ===== 画廊抽屉 ===== -->
+    <div class="overlay" id="galleryOverlay"></div>
+    <aside class="drawer" id="galleryDrawer" aria-label="作品库">
+        <div class="drawer-header">
+            <h2>🖼 作品库</h2>
+            <div class="drawer-header-actions">
+                <button class="ghost-btn" id="galleryBatchBtn" title="批量管理">批量</button>
+                <button class="drawer-close" id="galleryClose" aria-label="关闭"></button>
+            </div>
+        </div>
+        <div class="drawer-body" id="galleryBody"></div>
+    </aside>
+
+    <!-- ===== 灵感画廊抽屉 ===== -->
+    <div class="overlay" id="inspOverlay"></div>
+    <aside class="drawer" id="inspDrawer" aria-label="灵感画廊">
+        <div class="drawer-header">
+            <h2>✨ 灵感画廊</h2>
+            <button class="drawer-close" id="inspClose" aria-label="关闭"></button>
+        </div>
+        <div class="drawer-body" id="inspBody"></div>
+    </aside>
+
+    <!-- ===== 图层面板抽屉 ===== -->
+    <div class="overlay" id="layerOverlay"></div>
+    <aside class="drawer layer-drawer" id="layerDrawer" aria-label="图层管理">
+        <div class="drawer-header">
+            <h2>🗂 图层</h2>
+            <button class="drawer-close" id="layerClose" aria-label="关闭"></button>
+        </div>
+        <div class="drawer-body" id="layerBody"></div>
+    </aside>
+
+    <!-- ===== 保存对话框 ===== -->
+    <div class="modal" id="saveModal">
+        <h2>保存作品</h2>
+        <div class="modal-sub">为这幅流光留个名字与心情</div>
+        <label for="saveName">作品名称</label>
+        <input type="text" id="saveName" placeholder="未命名流光" maxlength="30" />
+        <label>此刻心情</label>
+        <div class="stars" id="saveStars">
+            <button class="star-btn" data-v="1">★</button>
+            <button class="star-btn" data-v="2">★</button>
+            <button class="star-btn" data-v="3">★</button>
+            <button class="star-btn" data-v="4">★</button>
+            <button class="star-btn" data-v="5">★</button>
+        </div>
+        <label for="saveNote">心情笔记（可选）</label>
+        <textarea id="saveNote" placeholder="今天画这幅画时，我感觉..." maxlength="200"></textarea>
+        <label for="saveTags">标签（逗号分隔，可选）</label>
+        <input type="text" id="saveTags" placeholder="如：风景, 抽象, 灵感" maxlength="60" />
+        <div class="modal-actions">
+            <button class="btn-secondary" id="saveCancel">取消</button>
+            <button class="btn-primary" id="saveConfirm">保存到作品库</button>
+        </div>
+    </div>
+
+    <!-- ===== AI 对话框（已禁用） ===== -->
+    <!--
+    <div class="overlay" id="aiOverlay"></div>
+    <div class="modal" id="aiModal" style="width:min(520px,92vw);">
+        <h2>🤖 AI 创作</h2>
+        <div class="modal-sub">让 AI 为你的流光注入灵感</div>
+        <div class="ai-tabs">
+            <button class="ai-tab active" data-tab="style">风格迁移</button>
+            <button class="ai-tab" data-tab="emotion">情绪识别</button>
+        </div>
+        <div class="ai-panel" id="aiPanelStyle">
+            <div class="ai-desc">上传一张图片，AI 分析其色彩风格，生成专属调色板与粒子参数。</div>
+            <label for="aiStyleFile" class="file-label">选择图片</label>
+            <input type="file" id="aiStyleFile" accept="image/*" hidden />
+            <div class="ai-file-row">
+                <div class="ai-file-name" id="aiStyleFileName">未选择图片</div>
+                <button class="ai-file-clear" id="aiStyleClear" style="display:none;">清除</button>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="aiCancel">关闭</button>
+                <button class="btn-primary" id="aiStyleApply">分析并应用</button>
+            </div>
+        </div>
+        <div class="ai-panel hidden" id="aiPanelEmotion">
+            <div class="ai-desc">输入一段心情文字，AI 识别情绪并推荐最匹配的主题色彩。</div>
+            <textarea id="aiEmotionText" placeholder="今天心情很低落，像一片灰色的海..." maxlength="200"></textarea>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="aiCancel2">关闭</button>
+                <button class="btn-primary" id="aiEmotionApply">分析情绪</button>
+            </div>
+        </div>
+        <div class="ai-loading hidden" id="aiLoading">
+            <div class="ai-spinner"></div>
+            <div>AI 分析中，请稍候...</div>
+        </div>
+    </div>
+    -->
+
+    <!-- ===== 分享对话框 ===== -->
+    <div class="overlay" id="shareOverlay"></div>
+    <div class="modal" id="shareModal" style="width:min(520px,92vw);">
+        <h2>📤 分享导出</h2>
+        <div class="modal-sub">生成分享卡片或导出动画</div>
+        <label for="shareArtist">艺术家署名</label>
+        <input type="text" id="shareArtist" placeholder="流光" maxlength="20" />
+        <div class="share-card-preview" id="shareCardPreview">
+            <div class="share-preview-tip">点击「生成卡片」预览</div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" id="shareCancel">关闭</button>
+            <button class="btn-primary" id="shareCardBtn">生成卡片</button>
+            <button class="btn-primary" id="shareWebMBtn">导出 WebM</button>
+        </div>
+    </div>
+
+    <!-- ===== 日记对话框 ===== -->
+    <div class="overlay" id="diaryOverlay"></div>
+    <div class="modal" id="diaryModal" style="width:min(560px,92vw);">
+        <h2>📊 情绪日记</h2>
+        <div class="modal-sub">近 7 天的心情轨迹</div>
+        <canvas class="diary-chart" id="diaryChart" width="500" height="120"></canvas>
+        <div class="diary-list" id="diaryList"></div>
+        <div class="modal-actions">
+            <button class="btn-secondary" id="diaryClose">关闭</button>
+        </div>
+    </div>
+
+    <!-- ===== 确认对话框 ===== -->
+    <div class="overlay" id="confirmOverlay"></div>
+    <div class="modal" id="confirmModal" style="width:min(420px,92vw);">
+        <h2 id="confirmTitle">确认操作</h2>
+        <div class="modal-sub" id="confirmMessage">确定要执行此操作吗？</div>
+        <div class="modal-actions">
+            <button class="btn-secondary" id="confirmCancel">取消</button>
+            <button class="btn-danger" id="confirmOk">确认</button>
+        </div>
+    </div>
+
+    <!-- ===== 快捷键面板 ===== -->
+    <div class="overlay" id="shortcutsOverlay"></div>
+    <div class="modal" id="shortcutsModal" style="width:min(560px,92vw);max-height:80vh;overflow-y:auto;">
+        <h2>⌨ 快捷键参考</h2>
+        <div class="modal-sub">按 <kbd>Ctrl</kbd> + <kbd>/</kbd> 打开此面板</div>
+        <div class="shortcuts-grid" id="shortcutsGrid">
+            <div class="shortcuts-group">
+                <div class="shortcuts-group-title">基础操作</div>
+                <div class="shortcut-item"><kbd>C</kbd><span>清空画布</span></div>
+                <div class="shortcut-item"><kbd>Z</kbd><span>撤销</span></div>
+                <div class="shortcut-item"><kbd>Y</kbd><span>重做</span></div>
+                <div class="shortcut-item"><kbd>S</kbd><span>保存作品</span></div>
+            </div>
+            <div class="shortcuts-group">
+                <div class="shortcuts-group-title">工具切换</div>
+                <div class="shortcut-item"><kbd>B</kbd><span>切换背景</span></div>
+                <div class="shortcut-item"><kbd>A</kbd><span>自动模式</span></div>
+                <div class="shortcut-item"><kbd>P</kbd><span>保留路径</span></div>
+                <div class="shortcut-item"><kbd>M</kbd><span>音频反应</span></div>
+                <div class="shortcut-item"><kbd>I</kbd><span>吸管工具</span></div>
+                <div class="shortcut-item"><kbd>E</kbd><span>橡皮擦</span></div>
+                <div class="shortcut-item"><kbd>T</kbd><span>文字工具</span></div>
+            </div>
+            <div class="shortcuts-group">
+                <div class="shortcuts-group-title">视图控制</div>
+                <div class="shortcut-item"><kbd>0</kbd><span>重置缩放</span></div>
+                <div class="shortcut-item"><kbd>G</kbd><span>作品库</span></div>
+                <div class="shortcut-item"><kbd>D</kbd><span>情绪日记</span></div>
+                <div class="shortcut-item"><kbd>L</kbd><span>图层管理</span></div>
+            </div>
+            <div class="shortcuts-group">
+                <div class="shortcuts-group-title">主题切换</div>
+                <div class="shortcut-item"><kbd>Space</kbd><span>随机主题</span></div>
+                <div class="shortcut-item"><kbd>1</kbd><span>彩虹主题</span></div>
+                <div class="shortcut-item"><kbd>2</kbd><span>海洋主题</span></div>
+                <div class="shortcut-item"><kbd>3</kbd><span>火焰主题</span></div>
+                <div class="shortcut-item"><kbd>4</kbd><span>极光主题</span></div>
+                <div class="shortcut-item"><kbd>5</kbd><span>糖果主题</span></div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" id="shortcutsClose">关闭</button>
+        </div>
+    </div>
+
+    <!-- ===== 智能调色板面板 ===== -->
+    <div class="overlay" id="paletteOverlay"></div>
+    <div class="modal" id="paletteModal" style="width:min(600px,92vw);max-height:85vh;overflow-y:auto;">
+        <h2>🎨 智能调色板</h2>
+        <div class="modal-sub">基于画布内容分析生成的配色方案</div>
+        <div class="palette-container" id="paletteContainer"></div>
+        <div class="modal-actions">
+            <button class="btn-secondary" id="paletteRefresh">重新分析</button>
+            <button class="btn-secondary" id="paletteClose">关闭</button>
+        </div>
+    </div>
+
+    <!-- ===== 引导层 ===== -->
+    <div class="onboard" id="onboard">
+        <div class="onboard-spot" id="onboardSpot"></div>
+        <div class="onboard-card" id="onboardCard">
+            <div class="ob-progress" id="obProgress">第 1 / 3 步</div>
+            <h3 id="obTitle"></h3>
+            <p id="obText"></p>
+            <div class="ob-actions">
+                <button class="ob-skip" id="obSkip">跳过引导</button>
+                <button class="ob-next" id="obNext">下一步</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SVG 图标定义（不可见，仅引用） -->
+    <svg width="0" height="0" style="position:absolute;"><defs>
+        <!-- 色盲模拟滤镜 -->
+        <filter id="cb-protanopia"><feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/></filter>
+        <filter id="cb-deuteranopia"><feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/></filter>
+        <filter id="cb-tritanopia"><feColorMatrix type="matrix" values="0.95 0.05 0 0 0  0 0.433 0.567 0 0  0 0.475 0.525 0 0  0 0 0 1 0"/></filter>
+    </defs></svg>
+
+        <script type="module" src="js/main.js"></script>
+</body>
+</html>

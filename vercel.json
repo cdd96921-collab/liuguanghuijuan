@@ -1,0 +1,10 @@
+{
+    "rewrites": [
+        { "source": "/", "destination": "/lizi.html" },
+        { "source": "/lizi.html", "destination": "/lizi.html" },
+        { "source": "/css/:path*", "destination": "/css/:path*" },
+        { "source": "/js/:path*", "destination": "/js/:path*" },
+        { "source": "/api/:path*", "destination": "/api/:path*" },
+        { "source": "/(.*)", "destination": "/lizi.html" }
+    ]
+}

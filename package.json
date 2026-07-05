@@ -1,0 +1,12 @@
+{
+  "name": "liuguang",
+  "version": "7.0.0",
+  "description": "流光绘卷 - 粒子绘画与情绪疗愈工具",
+  "type": "module",
+  "main": "lizi.html",
+  "scripts": {
+    "dev": "npx serve ."
+  },
+  "keywords": ["particle", "canvas", "art", "creative", "emotional-wellness"],
+  "license": "MIT"
+}
